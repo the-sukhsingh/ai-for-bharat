@@ -32,7 +32,6 @@ export const metadata: Metadata = {
     "content creation",
     "AI content generator",
     "social media automation",
-    "Instagram posts",
     "X threads",
     "LinkedIn articles",
     "YouTube descriptions",
