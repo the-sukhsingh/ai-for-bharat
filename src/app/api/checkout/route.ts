@@ -27,7 +27,7 @@ export const POST = async (req: Request) => {
         const session = await client.checkoutSessions.create({
             product_cart: [{ product_id: prodID, quantity: 1 }],
             customer: { email: userEmail, name: userName },
-            return_url: process.env.DODO_PAYMENTS_RETURN_URL || 'http://localhost:3000/profile#pricing',
+            return_url: process.env.DODO_PAYMENTS_RETURN_URL || 'https://media.plann.site/profile#pricing',
             metadata: {
                 userId: user._id,
                 plan: getPlanName(prodID)
@@ -43,8 +43,7 @@ export const POST = async (req: Request) => {
 const PLAN_MAP: Record<string, string> = {
     // These will be replaced by actual product IDs
     pdt_0NVkfbJeSIbqQxDZFZpQA: "basic",
-    pdt_0NVl8hUVufh9IXEDXgI8u: "pro",
-    pdt_0NVlZtyWjflp2R1yZP0H7: "pro",
+    pdt_0NVlZtyWjflp2R1yZP0H7: "pro"
 };
 
 export const getPlanName = (prodId: string): string => {

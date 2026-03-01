@@ -87,7 +87,7 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/manifest.json",
-  metadataBase: new URL("https://media.sukhjitsingh.me/"),
+  metadataBase: new URL("https://media.plann.site/"),
   alternates: {
     canonical: "/",
   },
