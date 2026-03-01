@@ -213,61 +213,62 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-serif tracking-tighter mb-4">Simple, transparent pricing</h2>
-            <p className="text-muted-foreground text-lg">Pay only for what you need with our straightforward credit system.</p>
+            <p className="text-muted-foreground text-lg">Choose a plan that fits your content creation needs.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto items-center">
-            {/* Starter */}
+            {/* Free */}
             <div className="rounded-3xl border border-border/40 bg-accent/20 p-8 flex flex-col hover:border-border transition-colors">
-              <h3 className="text-muted-foreground font-medium mb-4 tracking-tight">Starter Pack</h3>
+              <h3 className="text-muted-foreground font-medium mb-4 tracking-tight">Free</h3>
               <div className="mb-4">
-                <span className="text-4xl font-serif text-foreground">$1.10</span>
+                <span className="text-4xl font-serif text-foreground">$0</span><span className="text-muted-foreground">/mo</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-8 min-h-[40px]">Perfect for trying out the AI engine.</p>
+              <p className="text-sm text-muted-foreground mb-8 min-h-[40px]">Perfect for exploring the platform.</p>
               <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> 200 AI Credits</li>
-                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> $0.0055 per credit</li>
-                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> Pay as you go</li>
+                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> View User Interface</li>
+                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-muted-foreground/50" /> No Posts Publishing</li>
+                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-muted-foreground/50" /> No Thumbnail Generation</li>
+                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-muted-foreground/50" /> No Script Generation</li>
               </ul>
               <Button variant="outline" className="w-full rounded-xl" onClick={() => !isAuthenticated ? signIn("google") : undefined} asChild={isAuthenticated}>
-                {isAuthenticated ? <Link href="/profile">Get Credits</Link> : <span>Get Credits</span>}
+                {isAuthenticated ? <Link href="/profile">Get Started</Link> : <span>Get Started</span>}
               </Button>
             </div>
 
-            {/* Value (Popular) */}
+            {/* Basic */}
             <div className="rounded-3xl border-2 border-primary bg-card p-8 flex flex-col shadow-2xl md:scale-105 z-10 relative">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider py-1.5 px-4 rounded-full shadow-md">
                 Most Popular
               </div>
-              <h3 className="text-primary font-medium mb-4 tracking-tight">Value Pack</h3>
+              <h3 className="text-primary font-medium mb-4 tracking-tight">Basic Plan</h3>
               <div className="mb-4">
-                <span className="text-4xl font-serif text-foreground">$3.33</span>
+                <span className="text-4xl font-serif text-foreground">$49</span><span className="text-muted-foreground">/mo</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-8 min-h-[40px]">Best value for regular content creators.</p>
+              <p className="text-sm text-muted-foreground mb-8 min-h-[40px]">Everything you need for active social media presence.</p>
               <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex items-center gap-3 text-sm font-medium"><Check className="h-4 w-4 text-primary" /> 740 AI Credits</li>
-                <li className="flex items-center gap-3 text-sm font-medium"><Check className="h-4 w-4 text-primary" /> $0.0045 per credit</li>
-                <li className="flex items-center gap-3 text-sm font-medium"><Check className="h-4 w-4 text-primary" /> No expiration</li>
+                <li className="flex items-center gap-3 text-sm font-medium"><Check className="h-4 w-4 text-primary" /> Publish up to 1000 posts</li>
+                <li className="flex items-center gap-3 text-sm font-medium"><Check className="h-4 w-4 text-primary" /> Generate up to 100 thumbnails</li>
+                <li className="flex items-center gap-3 text-sm font-medium"><Check className="h-4 w-4 text-muted-foreground/50" /> No Script Generation</li>
               </ul>
               <Button className="w-full rounded-xl shadow-md shadow-primary/20" onClick={() => !isAuthenticated ? signIn("google") : undefined} asChild={isAuthenticated}>
-                {isAuthenticated ? <Link href="/profile">Get Credits</Link> : <span>Get Credits</span>}
+                {isAuthenticated ? <Link href="/profile">Upgrade to Basic</Link> : <span>Subscribe</span>}
               </Button>
             </div>
 
-            {/* Power */}
+            {/* Pro */}
             <div className="rounded-3xl border border-border/40 bg-accent/20 p-8 flex flex-col hover:border-border transition-colors">
-              <h3 className="text-muted-foreground font-medium mb-4 tracking-tight">Power Pack</h3>
+              <h3 className="text-muted-foreground font-medium mb-4 tracking-tight">Pro Plan</h3>
               <div className="mb-4">
-                <span className="text-4xl font-serif text-foreground">$6.67</span>
+                <span className="text-4xl font-serif text-foreground">$99</span><span className="text-muted-foreground">/mo</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-8 min-h-[40px]">Maximum credits at the best available rate.</p>
+              <p className="text-sm text-muted-foreground mb-8 min-h-[40px]">Maximum limits for power users and agencies.</p>
               <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> 2000 AI Credits</li>
-                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> $0.0033 per credit</li>
-                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> No expiration</li>
+                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> Publish up to 2000 posts</li>
+                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> Generate up to 200 thumbnails</li>
+                <li className="flex items-center gap-3 text-sm text-foreground/80"><Check className="h-4 w-4 text-primary" /> Generate up to 100 scripts</li>
               </ul>
               <Button variant="outline" className="w-full rounded-xl" onClick={() => !isAuthenticated ? signIn("google") : undefined} asChild={isAuthenticated}>
-                {isAuthenticated ? <Link href="/profile">Get Credits</Link> : <span>Get Credits</span>}
+                {isAuthenticated ? <Link href="/profile">Upgrade to Pro</Link> : <span>Subscribe</span>}
               </Button>
             </div>
           </div>
@@ -289,9 +290,9 @@ export default function Home() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2" className="border px-6 py-2 rounded-2xl bg-background shadow-sm mt-4 hover:border-primary/20 transition-colors">
-              <AccordionTrigger className="hover:no-underline font-medium text-left text-base">Do my purchased credits expire?</AccordionTrigger>
+              <AccordionTrigger className="hover:no-underline font-medium text-left text-base">How does plan limit work?</AccordionTrigger>
               <AccordionContent className="text-muted-foreground leading-relaxed text-base pt-2">
-                No, your AI credits never expire. You can purchase a pack today and use them whenever you feel inspired to create content or thumbnails without worrying about a ticking clock.
+                We offer monthly subscription plans. Your feature limits (like posts and thumbnails) reset at the beginning of each billing month.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-3" className="border px-6 py-2 rounded-2xl bg-background shadow-sm mt-4 hover:border-primary/20 transition-colors">

@@ -1,6 +1,6 @@
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 
 /**
  * Get the character limit for an X account based on subscription type
@@ -94,6 +94,19 @@ export const publishToX = internalAction({
     }),
     handler: async (ctx, args) => {
         try {
+            // Check plan limits
+            const planCheck: any = await ctx.runQuery(api.plans.checkPlanLimits, {
+                userId: args.userId,
+                feature: "posts"
+            });
+
+            if (!planCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Plan limit reached. Your ${planCheck.plan} plan allows up to ${planCheck.limit} posts this month. Please upgrade your plan.`,
+                };
+            }
+
             // Get draft details if draftId is provided (to check for images)
             let imageUrl: string | null = null;
             if (args.draftId) {
@@ -122,7 +135,7 @@ export const publishToX = internalAction({
                     status: 'failed',
                     errorMessage: 'Social account not found',
                 });
-                
+
                 return {
                     success: false,
                     error: "Social account not found",
@@ -139,7 +152,7 @@ export const publishToX = internalAction({
                     status: 'failed',
                     errorMessage: 'Unauthorized',
                 });
-                
+
                 return {
                     success: false,
                     error: "Unauthorized",
@@ -157,7 +170,7 @@ export const publishToX = internalAction({
                         status: 'failed',
                         errorMessage: 'Access token expired',
                     });
-                    
+
                     return {
                         success: false,
                         error: "Access token expired. Please reconnect your X account.",
@@ -198,7 +211,7 @@ export const publishToX = internalAction({
                         status: 'failed',
                         errorMessage: 'Failed to refresh access token',
                     });
-                    
+
                     return {
                         success: false,
                         error: "Failed to refresh access token. Please reconnect your X account.",
@@ -221,10 +234,10 @@ export const publishToX = internalAction({
 
             // Get character limit based on account subscription type
             const charLimit = getCharacterLimit(account.subType);
-            
+
             // Split content into thread posts
             const threadPosts = splitIntoThreadPosts(args.content);
-            
+
             // Upload media if provided (will be attached to first tweet only)
             let mediaId: string | null = null;
             if (imageUrl) {
@@ -241,7 +254,7 @@ export const publishToX = internalAction({
             for (let i = 0; i < threadPosts.length; i++) {
                 const post = threadPosts[i];
                 const cleanedPost = cleanPostContent(post);
-                
+
                 // Truncate based on account's character limit
                 let tweetText = cleanedPost;
                 if (tweetText.length > charLimit) {
@@ -280,7 +293,7 @@ export const publishToX = internalAction({
                 if (!tweetResponse.ok) {
                     const errorData = await tweetResponse.json();
                     console.error('X API error:', errorData);
-                    
+
                     await ctx.runMutation(internal.publishLogs.logPublishInternal, {
                         userId: args.userId,
                         draftId: args.draftId,
@@ -289,7 +302,7 @@ export const publishToX = internalAction({
                         status: 'failed',
                         errorMessage: `X API error on tweet ${i + 1}/${threadPosts.length}: ${JSON.stringify(errorData)}`,
                     });
-                    
+
                     return {
                         success: false,
                         error: `Failed to post tweet ${i + 1} of ${threadPosts.length}`,
@@ -327,7 +340,7 @@ export const publishToX = internalAction({
 
         } catch (error) {
             console.error("X publish error:", error);
-            
+
             return {
                 success: false,
                 error: "Failed to publish to X",
@@ -354,6 +367,19 @@ export const publishToLinkedIn = internalAction({
     }),
     handler: async (ctx, args) => {
         try {
+            // Check plan limits
+            const planCheck: any = await ctx.runQuery(api.plans.checkPlanLimits, {
+                userId: args.userId,
+                feature: "posts"
+            });
+
+            if (!planCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Plan limit reached. Your ${planCheck.plan} plan allows up to ${planCheck.limit} posts this month. Please upgrade your plan.`,
+                };
+            }
+
             // Get draft details if draftId is provided (to check for images)
             let imageUrl: string | null = null;
             if (args.draftId) {
@@ -382,7 +408,7 @@ export const publishToLinkedIn = internalAction({
                     status: 'failed',
                     errorMessage: 'Social account not found',
                 });
-                
+
                 return {
                     success: false,
                     error: "Social account not found",
@@ -399,7 +425,7 @@ export const publishToLinkedIn = internalAction({
                     status: 'failed',
                     errorMessage: 'Unauthorized',
                 });
-                
+
                 return {
                     success: false,
                     error: "Unauthorized",
@@ -518,7 +544,7 @@ export const publishToLinkedIn = internalAction({
             if (!postResponse.ok) {
                 const errorData = await postResponse.text();
                 console.error('LinkedIn API error:', errorData);
-                
+
                 await ctx.runMutation(internal.publishLogs.logPublishInternal, {
                     userId: args.userId,
                     draftId: args.draftId,
@@ -556,7 +582,7 @@ export const publishToLinkedIn = internalAction({
 
         } catch (error) {
             console.error("LinkedIn publish error:", error);
-            
+
             return {
                 success: false,
                 error: "Failed to publish to LinkedIn",

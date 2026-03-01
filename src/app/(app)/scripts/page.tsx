@@ -7,12 +7,13 @@ import { useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Copy, Check, Sparkles } from 'lucide-react';
+import { Search, Copy, Check, Sparkles, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { Id } from '../../../../convex/_generated/dataModel';
 import ChatInterface from '@/components/chat/Chatbot';
 import Markdown from 'react-markdown';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 export default function ScriptsPage() {
   const { user } = useAuth();
@@ -56,6 +57,29 @@ export default function ScriptsPage() {
     const fullText = `${selectedScript.hook}\n\n${selectedScript.scriptSections.map(s => `${s.heading}\n${s.content}`).join('\n\n')}\n\n${selectedScript.cta}${selectedScript.hashtags ? '\n\n' + selectedScript.hashtags.map(h => '#' + h).join(' ') : ''}`;
     handleCopy(fullText, 'full');
   };
+
+  if (user && user.plan !== 'pro') {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center bg-background">
+        <div className="text-center space-y-6 flex flex-col items-center max-w-sm px-6">
+          <div className="w-20 h-20 rounded-[2rem] bg-muted flex items-center justify-center border border-border/50">
+            <Lock className="w-8 h-8 text-foreground/50" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-serif tracking-tight mb-2">Upgrade to Pro</h2>
+            <p className="text-muted-foreground text-sm">
+              Social script generation is an exclusive feature for Pro members. Upgrade your plan to unlock AI scripts and enhance your workflow.
+            </p>
+          </div>
+          <Link href="/profile#pricing" >
+            <Button className="w-full rounded-full">
+              View Plans
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] w-full bg-background selection:bg-neutral-200 dark:selection:bg-neutral-800">

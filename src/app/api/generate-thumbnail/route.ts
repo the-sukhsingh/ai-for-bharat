@@ -69,14 +69,20 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (user.credits < (count || 3)) {
+        // Check plan limits
+        const planCheck: any = await convex.query(api.plans.checkPlanLimits, {
+            userId: user._id,
+            feature: "thumbnails"
+        });
+
+        // if we are generating multiple, we should maybe check if currentUsage + count <= limit
+        // but for simplicity, we just check if they are allowed to generate at least 1. 
+        if (!planCheck.allowed || (planCheck.currentUsage + (count || 3) > planCheck.limit)) {
             return NextResponse.json(
-                { error: "Insufficient credits" },
+                { error: `Plan limit reached. Your ${planCheck.plan} plan allows up to ${planCheck.limit} thumbnails this month. Please upgrade your plan.` },
                 { status: 402 }
             );
-        };
-
-
+        }
         const images = await generateThumbnails(
             prompt,
             mainImageFile,
@@ -98,12 +104,7 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Deduct credits from user
-        await convex.mutation(api.users.deductCredits, {
-            userId: user._id,
-            amount: count || 3,
-        });
-
+        // Removed credit deduction
         return NextResponse.json({ images });
     } catch (error) {
         console.error("Error generating thumbnails:", error);

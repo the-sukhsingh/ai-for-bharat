@@ -31,12 +31,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
         async session({ session, token }) {
             if (session.user && session.user.email) {
-                // Fetch user from Convex to get the user ID and credits
-                const convexUser = await convex.query(api.users.getUserByEmail, {
+                // Fetch user from Convex to get the user ID and plan
+                const user = await convex.query(api.users.getUserByEmail, {
                     email: session.user.email,
                 });
-                if (convexUser) {
-                    session.user.id = convexUser._id;
+                if (user) {
+                    session.user.id = user._id;
                 }
             }
             return session;

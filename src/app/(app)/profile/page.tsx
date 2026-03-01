@@ -1,8 +1,7 @@
 "use client"
 import React, { use, useState } from 'react'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Check, User, Mail, Calendar, Coins, Activity, TrendingUp, Sparkles, Instagram, Linkedin, Twitter, Link2, Unlink, AlertCircle } from 'lucide-react'
-import { BuyCreditsButton } from '@/components/BuyCreditsButton'
+import { Check, User, Mail, Calendar, TrendingUp, Sparkles, Instagram, Linkedin, Twitter, Link2, Unlink, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
+import { Id } from '../../../../convex/_generated/dataModel'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -29,17 +29,16 @@ const Page = () => {
   const { user, isLoading, isAuthenticated } = useAuth()
   const [disconnectDialog, setDisconnectDialog] = useState<{ open: boolean; accountId?: string; platform?: string }>({ open: false })
 
-  // Get user's recent credit transactions
-  const transactions = useQuery(
-    api.users.listCreditTransactions,
-    user ? { userId: user._id, limit: 5 } : "skip"
-  )
-
   // Get user's social media accounts
   const socialAccounts = useQuery(
     api.users.getSocialAccounts,
-    user ? { userId: user._id } : "skip"
+    user ? { userId: user._id as Id<"users"> } : "skip"
   )
+
+  const usage = useQuery(
+    api.plans.getUserUsage,
+    user ? { userId: user._id as Id<"users"> } : "skip"
+  );
 
   // Mutations
   const unlinkAccount = useMutation(api.users.unlinkSocialAccount)
@@ -74,46 +73,65 @@ const Page = () => {
     }
   }, [])
 
+  const handleUpgrade = async (planName: "basic" | "pro") => {
+    if (!user?._id) return;
+
+    const productId = planName === "basic"
+      ? "pdt_0NVkfbJeSIbqQxDZFZpQA"
+      : "pdt_0NVlZtyWjflp2R1yZP0H7";
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prodID: productId,
+          userEmail: user?.email || "test@example.com",
+          userName: user?.name || "test",
+        }),
+      });
+
+      console.log(response)
+
+      if (!response.ok) {
+        throw new Error("Failed to create checkout session");
+      }
+
+      const data = await response.json();
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        toast.error("Failed to retrieve payment link.");
+      }
+    } catch (e: any) {
+      toast.error(`Upgrade failed: ${e.message}`);
+    }
+  };
+
   const tiers = [
     {
-      name: "Starter Pack",
-      credits: 200,
-      price: "$1.10",
-      productId: "pdt_0NVkfbJeSIbqQxDZFZpQA",
-      description: "Perfect for trying out AI features.",
+      name: "Basic Plan",
+      id: "basic" as const,
+      price: "$49",
+      description: "Everything you need for active social media presence.",
       features: [
-        "200 AI Credits",
-        "$0.0055 per credit",
-        "Pay as you go",
-        "No expiration",
-      ],
-      popular: false,
-    },
-    {
-      name: "Value Pack",
-      credits: 740,
-      price: "$3.33",
-      productId: "pdt_0NVl8hUVufh9IXEDXgI8u",
-      description: "Best value for regular learners.",
-      features: [
-        "740 AI Credits",
-        "$0.0045 per credit",
-        "Pay as you go",
-        "No expiration",
+        "Publish up to 1000 posts",
+        "Generate up to 100 thumbnails",
+        "No Script Generation"
       ],
       popular: true,
     },
     {
-      name: "Power Pack",
-      credits: 2000,
-      price: "$6.67",
-      productId: "pdt_0NVlZtyWjflp2R1yZP0H7",
-      description: "Maximum credits at the best rate.",
+      name: "Pro Plan",
+      id: "pro" as const,
+      price: "$99",
+      description: "Maximum limits for power users and agencies.",
       features: [
-        "2000 AI Credits",
-        "$0.0033 per credit",
-        "Pay as you go",
-        "No expiration",
+        "Publish up to 2000 posts",
+        "Generate up to 200 thumbnails",
+        "Generate up to 100 scripts"
       ],
       popular: false,
     },
@@ -230,19 +248,14 @@ const Page = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-sm px-4 py-1.5 font-medium rounded-full shadow-none bg-background text-foreground border-border/60">
-              <Coins className="h-3.5 w-3.5 mr-2" />
-              {user.credits} Credits
+            <Badge variant="outline" className="text-sm px-4 py-1.5 font-medium rounded-full shadow-none bg-background text-foreground border-border/60 capitalize">
+              <Sparkles className="h-3.5 w-3.5 mr-2" />
+              {user.plan || 'Free'} Plan
             </Badge>
-            {user.credits < 100 && (
-              <Badge variant="outline" className="text-xs px-3 py-1.5 rounded-full shadow-none border-foreground text-foreground">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Low Balance
-              </Badge>
-            )}
           </div>
         </div>
       </div>
+
 
       {/* Social Media Accounts */}
       <div className="mb-16">
@@ -316,59 +329,52 @@ const Page = () => {
         </div>
       </div>
 
-      {/* Recent Activity */}
-      {transactions && transactions.length > 0 && (
+      {/* Usage Section */}
+      {usage && (
         <div className="mb-16">
           <div className="mb-6">
-            <h2 className="font-serif text-2xl tracking-tight mb-1">Recent Activity</h2>
+            <h2 className="font-serif text-2xl tracking-tight mb-1">Monthly Usage</h2>
             <p className="text-sm text-muted-foreground">
-              Track your recent transactions and usage.
+              Track your feature usage for the current billing month.
             </p>
           </div>
-          <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
-            <div className="divide-y divide-border/40 max-h-80 overflow-y-auto noscrollbar pb-4 mask-b-from-90% mask-b-from-foreground">
-              {transactions.map((transaction) => (
-                <div key={transaction._id} className="p-4 sm:px-6 flex items-center justify-between hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-full border ${transaction.amount > 0 ? 'border-border/60 bg-muted/50' : 'border-border/60 bg-muted/20'}`}>
-                      <Activity className={`h-4 w-4 ${transaction.amount > 0 ? 'text-foreground' : 'text-muted-foreground'}`} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium capitalize">{transaction.reason}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDate(transaction.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={`text-sm font-medium ${transaction.amount > 0 ? 'text-foreground' : 'text-muted-foreground'}`}>
-                    {transaction.amount > 0 ? '+' : ''}{transaction.amount}
-                  </div>
-                </div>
-              ))}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border/40 bg-card p-6">
+              <h3 className="font-medium text-sm mb-2 text-muted-foreground">Posts</h3>
+              <p className="text-2xl font-serif">{usage.posts} <span className="text-sm text-muted-foreground font-sans tracking-normal">published</span></p>
+            </div>
+            <div className="rounded-2xl border border-border/40 bg-card p-6">
+              <h3 className="font-medium text-sm mb-2 text-muted-foreground">Thumbnails</h3>
+              <p className="text-2xl font-serif">{usage.thumbnails} <span className="text-sm text-muted-foreground font-sans tracking-normal">generated</span></p>
+            </div>
+            <div className="rounded-2xl border border-border/40 bg-card p-6">
+              <h3 className="font-medium text-sm mb-2 text-muted-foreground">Scripts</h3>
+              <p className="text-2xl font-serif">{usage.scripts} <span className="text-sm text-muted-foreground font-sans tracking-normal">generated</span></p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Credits Purchase Section */}
+
+      {/* Plan Upgrade Section */}
       <section id="pricing" className="mb-8 pt-8 border-t border-border/40">
         <div className="mb-6">
-          <h2 className="font-serif text-2xl tracking-tight mb-1">Add Credits</h2>
+          <h2 className="font-serif text-2xl tracking-tight mb-1">Subscription Plans</h2>
           <p className="text-sm text-muted-foreground">
-            Top up your account with AI credits to continue using premium features.
+            Upgrade your plan to unlock more features and higher limits.
           </p>
-        </div>  
-      
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {tiers.map((tier) => (
             <div
               key={tier.name}
-              className={`relative flex flex-col rounded-2xl p-6 transition-all duration-300 border ${tier.popular ? 'border-foreground shadow-sm bg-card' : 'border-border/40 bg-background hover:border-border'}`}
+              className={`relative flex flex-col rounded-2xl p-6 transition-all duration-300 border ${tier.popular ? 'border-primary shadow-sm bg-card' : 'border-border/40 bg-background hover:border-border'}`}
             >
               {tier.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <div className="rounded-full bg-foreground px-3 py-1 text-[10px] uppercase tracking-wider font-semibold text-background">
+                  <div className="rounded-full bg-primary text-primary-foreground px-3 py-1 text-[10px] uppercase tracking-wider font-semibold">
                     Most Popular
                   </div>
                 </div>
@@ -377,7 +383,7 @@ const Page = () => {
               <div className="mb-6 text-center">
                 <h3 className="text-sm font-medium tracking-tight mb-2 text-muted-foreground">{tier.name}</h3>
                 <div className="flex items-baseline justify-center gap-1.5 mb-2">
-                  <span className="font-serif text-4xl">{tier.price}</span>
+                  <span className="font-serif text-4xl">{tier.price}</span><span className="text-muted-foreground">/mo</span>
                 </div>
                 <p className="text-xs text-muted-foreground">{tier.description}</p>
               </div>
@@ -392,11 +398,14 @@ const Page = () => {
               </div>
 
               <div className="mt-auto">
-                <BuyCreditsButton
-                  productId={tier.productId}
-                  price={tier.price}
-                  variant={tier.popular ? "default" : "outline"}
-                />
+                <Button
+                  className="w-full rounded-xl"
+                  variant={user.plan === tier.id ? "outline" : (tier.popular ? "default" : "outline")}
+                  disabled={user.plan === tier.id}
+                  onClick={() => handleUpgrade(tier.id)}
+                >
+                  {user.plan === tier.id ? "Current Plan" : "Upgrade"}
+                </Button>
               </div>
             </div>
           ))}
@@ -407,7 +416,7 @@ const Page = () => {
       <AlertDialog open={disconnectDialog.open} onOpenChange={(open) => setDisconnectDialog({ open })}>
         <AlertDialogContent className="rounded-2xl border-border/40 sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-serif text-2xl">Disconnect {disconnectDialog.platform}?</AlertDialogTitle>
+            <AlertDialogTitle className="font-serif text-2xl font-light">Disconnect {disconnectDialog.platform}?</AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
               This will remove your {disconnectDialog.platform} account connection. You won't be able to publish to this account until you reconnect it.
             </AlertDialogDescription>

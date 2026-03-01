@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "../theme/ThemeToggle";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Menu,  Rocket, LogOut, CreditCard } from "lucide-react";
+import { Menu, Rocket, LogOut, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
@@ -101,7 +101,7 @@ const Navbar = () => {
                                                             <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
                                                             <div className="mt-1 flex items-center gap-1 text-primary">
                                                                 <Rocket className="h-3 w-3" />
-                                                                <span className="text-xs font-bold">{user?.credits ?? 0} Credits</span>
+                                                                <span className="text-xs font-bold capitalize">{user?.plan || 'free'} Plan</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -147,8 +147,8 @@ const Navbar = () => {
                                                 <p className="text-sm font-semibold leading-none">{user.name}</p>
                                                 <p className="text-xs text-muted-foreground mt-2 truncate">{user.email}</p>
                                                 <div className="mt-4 flex items-center justify-between p-2 rounded-xl bg-accent/50 border">
-                                                    <span className="text-xs font-medium text-muted-foreground">Available Credits</span>
-                                                    <span className="text-sm font-bold text-primary">{user.credits ?? 0}</span>
+                                                    <span className="text-xs font-medium text-muted-foreground">Current Plan</span>
+                                                    <span className="text-sm font-bold text-primary capitalize">{user.plan || 'free'}</span>
                                                 </div>
                                             </div>
                                             <div className="p-1 space-y-1">
@@ -158,7 +158,7 @@ const Navbar = () => {
                                                         className="w-full justify-start gap-2 hover:bg-primary/10 hover:text-primary transition-colors"
                                                     >
                                                         <CreditCard className="h-4 w-4" />
-                                                        Buy Credits
+                                                        Upgrade Plan
                                                     </Button>
                                                 </Link>
                                                 <Button

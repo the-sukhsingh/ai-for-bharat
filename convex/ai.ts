@@ -1093,26 +1093,7 @@ Current Date: ${TodayDate}`;
                 draftId: lastDraftId ? (lastDraftId as any) : undefined,
             });
 
-            // Charge user credits
-            try {
-                const effectiveTokens = inputTokens + (4 * outputTokens);
-                const creditsUsed = Math.min(8, Math.max(1, Math.ceil(effectiveTokens / 2000)));
-
-                await ctx.runMutation(api.users.chargeCredits, {
-                    userId,
-                    amount: creditsUsed,
-                    reason: 'chat',
-                    metadata: {
-                        inputTokens,
-                        outputTokens,
-                        effectiveTokens,
-                        creditsUsed
-                    }
-                });
-            } catch (err) {
-                console.error('Failed to charge credits after successful chat:', err);
-            }
-
+            // Credits tracking removed
 
             return {
                 status: "success",

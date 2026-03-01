@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Markdown from 'react-markdown';
+import { toast } from 'sonner';
 
 interface ChatMessage {
     id: string;
@@ -158,6 +159,16 @@ const Chatbot = ({ initialChatId = null, initialMessages = [], showHeader = true
 
 
     const handleSendMessage = async (message: string) => {
+        if (user && user.plan === 'free') {
+            toast.error('AI Chat is only available on Basic and Pro plans. Please upgrade to continue.');
+            return;
+        }
+
+        if (chatType === 'socialScript' && user && user.plan !== 'pro') {
+            toast.error('Social Scripts are an exclusive feature for Pro members. Please upgrade to continue.');
+            return;
+        }
+
         if (!message.trim() && selectedFiles.length === 0) return
 
         // Clear the input message state
@@ -410,11 +421,17 @@ const Chatbot = ({ initialChatId = null, initialMessages = [], showHeader = true
                             <Button
                                 type="submit"
                                 size="icon"
-                                disabled={(!inputMessage.trim() && selectedFiles.length === 0) || isLoading}
+                                disabled={isLoading || ((!inputMessage.trim() && selectedFiles.length === 0) && user?.plan !== 'free')}
                                 className={`shrink-0 h-9 w-9 rounded-xl transition-all ${inputMessage.trim() || selectedFiles.length > 0
                                     ? 'bg-foreground text-background hover:bg-foreground/90'
                                     : 'bg-muted text-muted-foreground hover:bg-muted'
                                     }`}
+                                onClick={(e) => {
+                                    if (user?.plan === 'free' || (chatType === 'socialScript' && user?.plan !== 'pro')) {
+                                        e.preventDefault();
+                                        handleSendMessage('');
+                                    }
+                                }}
                             >
                                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                             </Button>

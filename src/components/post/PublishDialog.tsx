@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Twitter, Linkedin, Loader2, CheckCircle2, AlertCircle, Clock, Calendar, X, Edit2, Trash2, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,8 @@ export function PublishDialog({
   draftId,
   platforms,
 }: PublishDialogProps) {
+  const { user } = useAuth();
+
   const getInitialScheduleTime = () => {
     const date = new Date();
     date.setMinutes(date.getMinutes() + 5);
@@ -142,6 +145,11 @@ export function PublishDialog({
   };
 
   const handlePublishNow = async () => {
+    if (user?.plan === 'free') {
+      toast.error('Post publishing is only available on Basic and Pro plans. Please upgrade.');
+      return;
+    }
+
     if (selectedPlatforms.length === 0) {
       toast.error('Please select at least one platform');
       return;
@@ -219,6 +227,11 @@ export function PublishDialog({
   };
 
   const handleSchedule = async () => {
+    if (user?.plan === 'free') {
+      toast.error('Post scheduling is only available on Basic and Pro plans. Please upgrade.');
+      return;
+    }
+
     if (selectedPlatforms.length === 0) {
       toast.error('Please select at least one platform');
       return;
@@ -317,6 +330,11 @@ export function PublishDialog({
   };
 
   const handlePublishScheduledNow = async (schedule: any) => {
+    if (user?.plan === 'free') {
+      toast.error('Post publishing is only available on Basic and Pro plans. Please upgrade.');
+      return;
+    }
+
     setPublishing(true);
     try {
       const account = getConnectedAccount(schedule.platform);
@@ -362,7 +380,17 @@ export function PublishDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" disabled={connectedCount === 0}>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={connectedCount === 0 && user?.plan !== 'free'}
+          onClick={(e) => {
+            if (user?.plan === 'free') {
+              e.preventDefault();
+              toast.error('Post publishing is only available on Basic and Pro plans. Please upgrade.');
+            }
+          }}
+        >
           Publish
         </Button>
       </DialogTrigger>

@@ -45,7 +45,7 @@ export async function POST(request: Request) {
             );
         }
 
-        // Get user ID and credits
+        // Get user ID and plan
         const user = await convex.query(api.users.getUserByEmail, { email: session.user.email });
 
         if (!user) {
@@ -55,40 +55,35 @@ export async function POST(request: Request) {
             );
         }
 
-        // Estimate required credits deterministically before processing
-        // We'll estimate tokens based on question length + recent messages (deterministic, adjustable)
-        let recentMessages: any[] = [];
-        if (chatId) {
-            try {
-                recentMessages = await convex.query(api.messages.listChatMessages, {
-                    userId: user._id,
-                    chatId: chatId as Id<"chats">
-                });
-            } catch (e) {
-                recentMessages = [];
-            }
-        }
-
-        // Build a conservative estimate of input characters
-        const historySample = (recentMessages || []).slice(-5).map(m => m.content).join('\n');
-        const chars = (historySample + '\n' + question).length;
-        const estimatedInputTokens = Math.max(1, Math.ceil(chars / 4));
-        // Estimate output tokens conservatively: half of inputTokens + 128, capped
-        const estimatedOutputTokens = Math.min(2048, Math.max(64, Math.ceil(estimatedInputTokens * 0.5) + 128));
-
-        const effectiveTokens = estimatedInputTokens + (4 * estimatedOutputTokens);
-        const estimatedCredits = Math.min(8, Math.max(1, Math.ceil(effectiveTokens / 2000)));
-
-        if (user.credits < estimatedCredits) {
+        if (user.plan === 'free') {
             return NextResponse.json(
-                { error: "Insufficient credits", estimatedCredits },
+                { error: "AI Chat is only available on Basic and Pro plans. Please upgrade to continue." },
                 { status: 403 }
             );
         }
 
-        // We do NOT deduct here. Charging happens after successful AI response to ensure we only charge for completed work.  
+        if (chatType === 'socialScript') {
+            if (user.plan !== 'pro') {
+                return NextResponse.json(
+                    { error: "Social Scripts are an exclusive feature for Pro members. Please upgrade to continue." },
+                    { status: 403 }
+                );
+            }
 
+            const limitCheck = await convex.query(api.plans.checkPlanLimits, {
+                userId: user._id,
+                feature: "scripts"
+            });
 
+            if (!limitCheck.allowed) {
+                return NextResponse.json(
+                    { error: `Plan limit reached. Your ${limitCheck.plan} plan allows up to ${limitCheck.limit} scripts this month.` },
+                    { status: 403 }
+                );
+            }
+        }
+
+        // Estimates and credits have been removed.
         // Get or create conversation based on chatId
         let conversation: { _id: Id<"chats">; title: string };
 
@@ -185,7 +180,6 @@ export async function POST(request: Request) {
             conversationId: conversation._id,
             messageId: userMessageId,
             uploads: filteredFileData,
-            estimatedCredits,
             result
         });
 

@@ -17,6 +17,8 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { useSession } from "next-auth/react";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import { FileUpload } from "@/components/ui/file-upload";
 import {
   Dialog,
@@ -47,6 +49,7 @@ const templates = [
 
 const ThumbnailCreator = () => {
   const { data: session } = useSession();
+  const { user } = useAuth();
   const [prompt, setPrompt] = useState("");
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
@@ -83,6 +86,11 @@ const ThumbnailCreator = () => {
 
 
   const handleGenerate = async () => {
+    if (user?.plan === 'free') {
+      toast.error('Thumbnail generation is only available on Basic and Pro plans. Please upgrade.');
+      return;
+    }
+
     if (!prompt.trim()) {
       setError("Please enter a prompt");
       return;
@@ -108,11 +116,12 @@ const ThumbnailCreator = () => {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to generate thumbnails");
+        throw new Error(data.error || "Failed to generate thumbnails");
       }
 
-      const data = await response.json();
       setGeneratedImages(data.images);
 
     } catch (err) {
@@ -374,11 +383,11 @@ const ThumbnailCreator = () => {
               </div>
 
               {/* Generate Button */}
-              {!isGenerating  && (
+              {!isGenerating && (
                 <div className="flex justify-center pt-4">
                   <Button
                     onClick={handleGenerate}
-                    disabled={isGenerating || !prompt.trim()}
+                    disabled={isGenerating || (user?.plan !== 'free' && !prompt.trim())}
                     className="h-12 px-8 rounded-full text-sm font-medium tracking-wide shadow-none"
                     size="lg"
                   >

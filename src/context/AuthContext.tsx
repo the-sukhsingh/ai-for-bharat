@@ -12,7 +12,7 @@ export interface User {
     _creationTime: number;
     email: string;
     name: string;
-    credits: number;
+    plan: "free" | "basic" | "pro";
     imageUrl: string;
     createdAt: number;
 }
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
     };
 
-    return <AuthContext.Provider value={ value } > { children } </AuthContext.Provider>;
+    return <AuthContext.Provider value={value} > {children} </AuthContext.Provider>;
 }
 
 // Custom hook to use auth context

@@ -3,7 +3,7 @@ import { action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { GoogleGenAI, Type } from '@google/genai';
-
+import { internal } from "./_generated/api";
 const MAX_LOOPS = 5;
 
 // Helper to extract sections from generated script
@@ -45,6 +45,15 @@ async function fetchUrlContent(url: string) {
 const createSocialScriptToolHandlers = (ctx: any) => ({
     generate_social_script: async ({ userId, title, platform, idea, duration, style, websiteUrl, additionalContext }: any): Promise<any> => {
         try {
+            // Check plan limits
+            const planCheck: any = await ctx.runQuery(api.plans.checkPlanLimits, {
+                userId: userId as Id<"users">,
+                feature: "scripts"
+            });
+            if (!planCheck.allowed) {
+                return { success: false, error: `Plan limit reached. Your ${planCheck.plan} plan allows up to ${planCheck.limit} scripts this month. Please upgrade your plan.` };
+            }
+
             let enrichedContext = idea;
 
             // Fetch website content if provided

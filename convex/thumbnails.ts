@@ -15,7 +15,7 @@ export const saveThumbnail = action({
     },
     returns: v.id("thumbnails"),
     handler: async (ctx, args) => {
-       
+
 
         // Get user by email
         const user = await ctx.runQuery(internal.thumbnails.getUserByEmail, {
@@ -63,7 +63,8 @@ export const getUserByEmail = internalQuery({
             name: v.string(),
             imageUrl: v.optional(v.string()),
             createdAt: v.number(),
-            credits: v.number(),
+            plan: v.union(v.literal("free"), v.literal("basic"), v.literal("pro")),
+            subscriptionEndDate: v.optional(v.number()),
         }),
         v.null()
     ),
@@ -72,7 +73,7 @@ export const getUserByEmail = internalQuery({
             .query("users")
             .withIndex("by_email", (q) => q.eq("email", args.email))
             .first();
-        
+
         return user || null;
     },
 });

@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import { ModeToggle } from "@/components/theme/ThemeToggle";
 import Navbar from "@/components/misc/Navbar";
+import { Toaster } from 'sonner'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -105,7 +106,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} antialiased`}
       >
         <Providers>
-
+      <Toaster position="bottom-right" />
           <Navbar />
           {children}
         </Providers>

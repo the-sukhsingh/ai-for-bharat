@@ -30,7 +30,7 @@ export const upsertUser = mutation({
       name: args.name,
       imageUrl: args.imageUrl,
       createdAt: Date.now(),
-      credits: 50
+      plan: "free"
     });
 
 
@@ -49,7 +49,8 @@ export const getUserByEmail = query({
       name: v.string(),
       imageUrl: v.optional(v.string()),
       createdAt: v.number(),
-      credits: v.number(),
+      plan: v.union(v.literal("free"), v.literal("basic"), v.literal("pro")),
+      subscriptionEndDate: v.optional(v.number()),
     }),
     v.null()
   ),
@@ -59,7 +60,7 @@ export const getUserByEmail = query({
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
 
-      
+
   },
 });
 
@@ -74,7 +75,8 @@ export const getUserById = query({
       name: v.string(),
       imageUrl: v.optional(v.string()),
       createdAt: v.number(),
-      credits: v.number(),
+      plan: v.union(v.literal("free"), v.literal("basic"), v.literal("pro")),
+      subscriptionEndDate: v.optional(v.number()),
     }),
     v.null()
   ),
@@ -103,133 +105,7 @@ export const updateProfile = mutation({
   },
 });
 
-// Update user credits
-export const updateCredits = mutation({
-  args: {
-    userId: v.id("users"),
-    credits: v.number(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.userId, { credits: args.credits });
-    return null;
-  },
-});
 
-// Add credits to user
-export const addCredits = mutation({
-  args: {
-    userId: v.id("users"),
-    amount: v.number(),
-    reason: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-    await ctx.db.patch(args.userId, { credits: user.credits + args.amount });
-
-    // Log transaction
-    await ctx.db.insert("creditTransactions", {
-      userId: args.userId,
-      amount: args.amount,
-      reason: args.reason,
-      metadata: null,
-      createdAt: Date.now(),
-    });
-
-    // Log it
-    await ctx.db.insert("creditTransactions", {
-      userId: args.userId,
-      amount: args.amount,
-      reason: "topup",
-      metadata: null,
-      createdAt: Date.now(),
-    });
-
-    return null;
-  },
-});
-
-// Deduct credits from user (simple, not recommended for external use)
-export const deductCredits = mutation({
-  args: {
-    userId: v.id("users"),
-    amount: v.number(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-    await ctx.db.patch(args.userId, { credits: Math.max(0, user.credits - args.amount) });
-    return null;
-  },
-});
-
-// Atomically charge credits and log transaction. Throws if insufficient balance.
-export const chargeCredits = mutation({
-  args: {
-    userId: v.id("users"),
-    amount: v.number(), // positive amount to charge
-    reason: v.string(),
-    metadata: v.optional(v.any()),
-  },
-  returns: v.object({ remaining: v.number() }),
-  handler: async (ctx, args) => {
-    if (args.amount <= 0) {
-      throw new Error("Charge amount must be positive");
-    }
-
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    if (user.credits < args.amount) {
-      throw new Error("Insufficient credits");
-    }
-
-    const newBalance = user.credits - args.amount;
-
-    await ctx.db.patch(args.userId, { credits: newBalance });
-
-    await ctx.db.insert("creditTransactions", {
-      userId: args.userId,
-      amount: -args.amount,
-      reason: args.reason,
-      metadata: args.metadata || null,
-      createdAt: Date.now(),
-    });
-
-    return { remaining: newBalance };
-  },
-});
-
-// Get recent credit transactions for a user
-export const listCreditTransactions = query({
-  args: {
-    userId: v.id("users"),
-    limit: v.optional(v.number()),
-  },
-  returns: v.array(v.object({
-    _id: v.id("creditTransactions"),
-    _creationTime: v.number(),
-    userId: v.id("users"),
-    amount: v.number(),
-    reason: v.string(),
-    metadata: v.optional(v.any()),
-    createdAt: v.number(),
-  })),
-  handler: async (ctx, args) => {
-    const limit = args.limit || 50;
-    const transactions = await ctx.db.query("creditTransactions").withIndex("by_user", (q) => q.eq("userId", args.userId)).take(limit);
-    return transactions;
-  },
-});
 
 // Delete user
 export const deleteUser = mutation({
@@ -245,7 +121,7 @@ export const deleteUser = mutation({
 export const linkSocialAccount = mutation({
   args: {
     userId: v.id("users"),
-    platform: v.union( v.literal("linkedin"), v.literal("x")),
+    platform: v.union(v.literal("linkedin"), v.literal("x")),
     accountId: v.string(),
     username: v.string(),
     displayName: v.optional(v.string()),
@@ -259,7 +135,7 @@ export const linkSocialAccount = mutation({
     // Check if account already exists for this user and platform
     const existing = await ctx.db
       .query("socialAccounts")
-      .withIndex("by_user_platform", (q) => 
+      .withIndex("by_user_platform", (q) =>
         q.eq("userId", args.userId).eq("platform", args.platform)
       )
       .filter((q) => q.eq(q.field("accountId"), args.accountId))
@@ -372,7 +248,7 @@ export const updateSocialAccountTokens = mutation({
       accessToken: args.accessToken,
       updatedAt: Date.now(),
     };
-    
+
     if (args.refreshToken !== undefined) {
       updates.refreshToken = args.refreshToken;
     }
@@ -399,7 +275,7 @@ export const updateSocialAccountTokensInternal = internalMutation({
       accessToken: args.accessToken,
       updatedAt: Date.now(),
     };
-    
+
     if (args.refreshToken !== undefined) {
       updates.refreshToken = args.refreshToken;
     }
@@ -531,7 +407,7 @@ export const getXConnection = query({
   handler: async (ctx, args) => {
     const account = await ctx.db
       .query("socialAccounts")
-      .withIndex("by_user_platform", (q) => 
+      .withIndex("by_user_platform", (q) =>
         q.eq("userId", args.userId).eq("platform", "x")
       )
       .filter((q) => q.eq(q.field("isActive"), true))
@@ -559,7 +435,7 @@ export const getLinkedInConnection = query({
   handler: async (ctx, args) => {
     const account = await ctx.db
       .query("socialAccounts")
-      .withIndex("by_user_platform", (q) => 
+      .withIndex("by_user_platform", (q) =>
         q.eq("userId", args.userId).eq("platform", "linkedin")
       )
       .filter((q) => q.eq(q.field("isActive"), true))
