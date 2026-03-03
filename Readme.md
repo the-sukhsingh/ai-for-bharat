@@ -486,4 +486,29 @@ graph TB
 
 ---
 
+
+## How to Run the Project
+
+```bash
+# Clone the repository
+git clone https://github.com/the-sukhsingh/ai-for-bharat.git
+cd ai-for-bharat
+
+# Install dependencies
+npm install
+
+# Initialize convex 
+npx convex dev --until-success
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys and database credentials
+
+# Start the development server
+npm run dev
+
+# Open the app in your browser
+# http://localhost:3000
+```
+
 **Built with ❤️ for creators, by creators**
